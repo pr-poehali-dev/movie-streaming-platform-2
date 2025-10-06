@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "name": "Search for movie",
+      "method": "GET",
+      "path": "/?query=Начало",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "title": "string",
+        "genre": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

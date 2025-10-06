@@ -9,10 +9,13 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 
 const API_URL = 'https://functions.poehali.dev/1a8978cb-79fe-4881-b0c8-f6cbaf78bbb2';
+const AI_SEARCH_URL = 'https://functions.poehali.dev/f7697e93-53cc-4169-903e-a3802bb3a196';
 
 const Admin = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -76,6 +79,55 @@ const Admin = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleAISearch = async () => {
+    if (!searchQuery.trim()) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите название для поиска',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSearching(true);
+
+    try {
+      const response = await fetch(`${AI_SEARCH_URL}?query=${encodeURIComponent(searchQuery)}`);
+      const data = await response.json();
+
+      if (response.ok && data.title) {
+        setFormData({
+          title: data.title || '',
+          description: data.description || '',
+          genre: data.genre || '',
+          rating: data.rating?.toString() || '',
+          year: data.year?.toString() || '',
+          type: data.type || 'movie',
+          image_url: '',
+          video_url: '',
+        });
+        toast({
+          title: 'Найдено!',
+          description: `Информация о "${data.title}" загружена. Добавьте URL изображения и видео.`,
+        });
+      } else {
+        toast({
+          title: 'Не найдено',
+          description: 'ИИ не смог найти информацию. Попробуйте другое название или заполните вручную.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: error instanceof Error ? error.message : 'Не удалось выполнить поиск',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
@@ -97,9 +149,48 @@ const Admin = () => {
           <div className="mb-6">
             <h2 className="text-3xl font-bold mb-2">Добавить контент</h2>
             <p className="text-muted-foreground">
-              Заполните форму, чтобы добавить фильм, сериал или ТВ-канал в базу данных
+              Используйте ИИ-поиск или заполните форму вручную
             </p>
           </div>
+
+          <Card className="p-6 mb-6 gradient-purple-pink">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Icon name="Sparkles" size={24} className="text-white" />
+                <h3 className="text-xl font-bold text-white">ИИ-Поиск контента</h3>
+              </div>
+              <p className="text-white/90 text-sm">
+                Введите название фильма или сериала, и ИИ автоматически найдёт всю информацию
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Например: Начало, Игра престолов, Друзья..."
+                  className="bg-white text-black"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAISearch()}
+                />
+                <Button
+                  type="button"
+                  onClick={handleAISearch}
+                  disabled={isSearching}
+                  className="bg-white text-black hover:bg-white/90"
+                >
+                  {isSearching ? (
+                    <>
+                      <Icon name="Loader2" size={18} className="animate-spin" />
+                      <span className="ml-2">Поиск...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="Search" size={18} />
+                      <span className="ml-2">Найти</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </Card>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -108,7 +199,7 @@ const Admin = () => {
                 id="title"
                 value={formData.title}
                 onChange={(e) => handleChange('title', e.target.value)}
-                placeholder="Введите название"
+                placeholder="Введите название или используйте ИИ-поиск выше"
                 required
               />
             </div>
