@@ -144,6 +144,15 @@ const Index = () => {
               >
                 <Icon name="User" size={18} />
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = '/admin'}
+                className="hidden md:flex"
+              >
+                <Icon name="Settings" size={18} />
+                <span className="ml-2">Админка</span>
+              </Button>
             </div>
           </div>
 
@@ -181,28 +190,35 @@ const Index = () => {
       </nav>
 
       <main className="container mx-auto px-4 py-8">
-        {activeTab === 'home' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="relative h-[400px] md:h-[500px] rounded-2xl overflow-hidden gradient-red-purple">
-              <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 bg-gradient-to-t from-black/80 to-transparent">
-                <Badge className="w-fit mb-4">Новинка 2024</Badge>
-                <h2 className="text-4xl md:text-6xl font-bold mb-4">Космическая одиссея</h2>
-                <p className="text-lg md:text-xl text-foreground/90 mb-6 max-w-2xl">
-                  Эпическое путешествие через галактику, где команда отважных астронавтов сталкивается с невероятными испытаниями.
-                </p>
-                <div className="flex gap-4">
-                  <Button size="lg" onClick={() => openPlayer(content[0])} className="bg-white text-black hover:bg-white/90">
-                    <Icon name="Play" size={20} />
-                    <span className="ml-2">Смотреть</span>
-                  </Button>
-                  <Button size="lg" variant="outline" onClick={() => toggleFavorite(1)}>
-                    <Icon name="Heart" size={20} />
-                    <span className="ml-2">В избранное</span>
-                  </Button>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Icon name="Loader2" size={48} className="animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            {activeTab === 'home' && content.length > 0 && (
+              <div className="space-y-8 animate-fade-in">
+                <div className="relative h-[400px] md:h-[500px] rounded-2xl overflow-hidden gradient-red-purple">
+                  <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 bg-gradient-to-t from-black/80 to-transparent">
+                    <Badge className="w-fit mb-4">Новинка {content[0]?.year}</Badge>
+                    <h2 className="text-4xl md:text-6xl font-bold mb-4">{content[0]?.title}</h2>
+                    <p className="text-lg md:text-xl text-foreground/90 mb-6 max-w-2xl">
+                      {content[0]?.description || 'Увлекательная история, которую стоит посмотреть'}
+                    </p>
+                    <div className="flex gap-4">
+                      <Button size="lg" onClick={() => openPlayer(content[0])} className="bg-white text-black hover:bg-white/90">
+                        <Icon name="Play" size={20} />
+                        <span className="ml-2">Смотреть</span>
+                      </Button>
+                      <Button size="lg" variant="outline" onClick={() => toggleFavorite(content[0]?.id)}>
+                        <Icon name="Heart" size={20} />
+                        <span className="ml-2">В избранное</span>
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            )}</>
         )}
 
         {activeTab === 'search' && (
