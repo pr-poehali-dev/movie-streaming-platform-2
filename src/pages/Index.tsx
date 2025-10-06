@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import {
 interface Content {
   id: number;
   title: string;
+  description?: string;
   genre: string;
   rating: number;
   year: number;
@@ -23,76 +24,32 @@ interface Content {
   isFavorite: boolean;
 }
 
-const mockContent: Content[] = [
-  {
-    id: 1,
-    title: 'Космическая одиссея',
-    genre: 'Фантастика',
-    rating: 8.9,
-    year: 2024,
-    type: 'movie',
-    imageUrl: '/placeholder.svg',
-    isFavorite: false,
-  },
-  {
-    id: 2,
-    title: 'Ночной город',
-    genre: 'Триллер',
-    rating: 8.5,
-    year: 2024,
-    type: 'movie',
-    imageUrl: '/placeholder.svg',
-    isFavorite: false,
-  },
-  {
-    id: 3,
-    title: 'Загадки прошлого',
-    genre: 'Детектив',
-    rating: 9.1,
-    year: 2023,
-    type: 'series',
-    imageUrl: '/placeholder.svg',
-    isFavorite: false,
-  },
-  {
-    id: 4,
-    title: 'Новости 24',
-    genre: 'Новости',
-    rating: 7.8,
-    year: 2024,
-    type: 'tv',
-    imageUrl: '/placeholder.svg',
-    videoUrl: 'https://example.com/live-stream',
-    isFavorite: false,
-  },
-  {
-    id: 5,
-    title: 'Комедийное шоу',
-    genre: 'Развлечения',
-    rating: 8.2,
-    year: 2024,
-    type: 'tv',
-    imageUrl: '/placeholder.svg',
-    isFavorite: false,
-  },
-  {
-    id: 6,
-    title: 'Дикая природа',
-    genre: 'Документальный',
-    rating: 9.3,
-    year: 2024,
-    type: 'series',
-    imageUrl: '/placeholder.svg',
-    isFavorite: false,
-  },
-];
+const API_URL = 'https://functions.poehali.dev/8782c920-0a18-4f85-8a17-6d3af7cee2c4';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'movies' | 'series' | 'tv' | 'genres' | 'search' | 'favorites' | 'profile'>('home');
-  const [content, setContent] = useState<Content[]>(mockContent);
+  const [content, setContent] = useState<Content[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchContent();
+  }, []);
+
+  const fetchContent = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      setContent(data.content || []);
+    } catch (error) {
+      console.error('Failed to fetch content:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const genres = Array.from(new Set(content.map(item => item.genre)));
 

@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "Add new movie",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "title": "Test Movie",
+        "description": "Test description",
+        "genre": "Action",
+        "rating": 8.5,
+        "year": 2024,
+        "type": "movie",
+        "image_url": "/test.jpg",
+        "video_url": "https://example.com/video"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "id": "number",
+        "message": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
