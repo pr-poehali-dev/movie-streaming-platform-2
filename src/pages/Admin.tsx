@@ -10,11 +10,13 @@ import { useToast } from '@/hooks/use-toast';
 
 const API_URL = 'https://functions.poehali.dev/1a8978cb-79fe-4881-b0c8-f6cbaf78bbb2';
 const AI_SEARCH_URL = 'https://functions.poehali.dev/f7697e93-53cc-4169-903e-a3802bb3a196';
+const GENERATE_POSTER_URL = 'https://functions.poehali.dev/56d47e39-a967-438f-9162-0ac0a8e6be40';
 
 const Admin = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isGeneratingPoster, setIsGeneratingPoster] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     title: '',
@@ -125,6 +127,53 @@ const Admin = () => {
       });
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleGeneratePoster = async () => {
+    if (!formData.title.trim()) {
+      toast({
+        title: 'Ошибка',
+        description: 'Сначала заполните название',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsGeneratingPoster(true);
+
+    try {
+      const response = await fetch(GENERATE_POSTER_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          genre: formData.genre,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.image_url) {
+        setFormData(prev => ({ ...prev, image_url: data.image_url }));
+        toast({
+          title: 'Постер создан!',
+          description: 'ИИ сгенерировал постер для фильма',
+        });
+      } else {
+        throw new Error(data.error || 'Не удалось сгенерировать постер');
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: error instanceof Error ? error.message : 'Не удалось создать постер',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingPoster(false);
     }
   };
 
@@ -273,13 +322,35 @@ const Admin = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="image_url">URL изображения (постер)</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="image_url">URL изображения (постер)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGeneratePoster}
+                  disabled={isGeneratingPoster || !formData.title}
+                  className="gap-2"
+                >
+                  {isGeneratingPoster ? (
+                    <>
+                      <Icon name="Loader2" size={16} className="animate-spin" />
+                      Генерация...
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="Sparkles" size={16} />
+                      Сгенерировать постер
+                    </>
+                  )}
+                </Button>
+              </div>
               <Input
                 id="image_url"
                 type="url"
                 value={formData.image_url}
                 onChange={(e) => handleChange('image_url', e.target.value)}
-                placeholder="https://example.com/poster.jpg"
+                placeholder="https://example.com/poster.jpg или сгенерируйте через ИИ"
               />
               {formData.image_url && (
                 <div className="mt-2 p-4 bg-muted rounded-lg">
@@ -351,14 +422,14 @@ const Admin = () => {
 
         <Card className="p-6 mt-8 bg-accent/10 border-accent">
           <div className="flex gap-4">
-            <Icon name="Info" size={24} className="text-accent flex-shrink-0 mt-1" />
+            <Icon name="Sparkles" size={24} className="text-accent flex-shrink-0 mt-1" />
             <div>
-              <h3 className="font-semibold mb-2">Как добавить контент из интернета:</h3>
+              <h3 className="font-semibold mb-2">ИИ-возможности админки:</h3>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>1. Найдите постер фильма/сериала и скопируйте его URL</li>
-                <li>2. Для видео используйте прямые ссылки на .mp4, .webm файлы</li>
-                <li>3. Для ТВ-каналов укажите ссылку на HLS-поток (.m3u8)</li>
-                <li>4. Все поля с * обязательны для заполнения</li>
+                <li>✨ <strong>ИИ-Поиск:</strong> Введите название → ИИ найдёт всю информацию о фильме</li>
+                <li>🎨 <strong>Генерация постеров:</strong> ИИ создаст уникальный постер по описанию</li>
+                <li>📹 Для видео используйте прямые ссылки на .mp4, .webm или HLS-потоки (.m3u8)</li>
+                <li>🔑 Для работы ИИ нужен OpenAI API ключ (добавьте в секреты проекта)</li>
               </ul>
             </div>
           </div>

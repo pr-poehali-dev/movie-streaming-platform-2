@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "Generate poster",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "title": "Space Adventure",
+        "description": "Epic journey through galaxy",
+        "genre": "Sci-Fi"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "image_url": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
