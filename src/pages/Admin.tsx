@@ -424,71 +424,132 @@ const Admin = () => {
           <div className="flex gap-4">
             <Icon name="Sparkles" size={24} className="text-accent flex-shrink-0 mt-1" />
             <div className="w-full">
-              <h3 className="font-semibold mb-3 text-lg">🤖 ИИ-возможности (YandexGPT + YandexART)</h3>
+              <h3 className="font-semibold mb-3 text-lg">🤖 ИИ-возможности от Сбера (GigaChat + Kandinsky)</h3>
               
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium mb-2">Что умеет ИИ:</h4>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>✨ <strong>Умный поиск:</strong> YandexGPT найдёт всю информацию о фильме по названию</li>
-                    <li>🎨 <strong>Постеры:</strong> YandexART автоматически сгенерирует уникальный постер</li>
+                    <li>✨ <strong>Умный поиск:</strong> GigaChat найдёт всю информацию о фильме по названию</li>
+                    <li>🎨 <strong>Постеры:</strong> Kandinsky автоматически сгенерирует уникальный постер</li>
                     <li>📹 Для видео используйте прямые ссылки на .mp4, .webm или HLS-потоки (.m3u8)</li>
+                    <li>🇷🇺 <strong>Работает в России</strong> без VPN и блокировок!</li>
                   </ul>
                 </div>
 
                 <div className="border-t pt-4">
-                  <h4 className="font-medium mb-3">📋 Инструкция по настройке (5 минут):</h4>
-                  <ol className="text-sm text-muted-foreground space-y-3">
+                  <h4 className="font-medium mb-3">📋 Подробная инструкция по настройке (3 минуты):</h4>
+                  <ol className="text-sm text-muted-foreground space-y-4">
                     <li>
-                      <strong>1. Откройте Яндекс Облако:</strong>
+                      <strong className="text-foreground">Шаг 1. Откройте сайт GigaChat</strong>
                       <br />
-                      Перейдите на <a href="https://console.yandex.cloud" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">console.yandex.cloud</a> и войдите через Яндекс ID
+                      <div className="mt-1 space-y-1">
+                        • Перейдите на <a href="https://developers.sber.ru/studio/workspaces" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-medium">developers.sber.ru/studio/workspaces</a>
+                        <br />
+                        • Нажмите <strong>"Войти"</strong> в правом верхнем углу
+                        <br />
+                        • Войдите через <strong>Сбер ID</strong> (можно создать новый, если нет)
+                      </div>
                     </li>
+                    
                     <li>
-                      <strong>2. Создайте облако и каталог:</strong>
+                      <strong className="text-foreground">Шаг 2. Создайте проект</strong>
                       <br />
-                      • Нажмите "Создать облако" (если ещё нет)
-                      <br />
-                      • Создайте каталог (folder) — это бесплатно
-                      <br />
-                      • Скопируйте <strong>ID каталога</strong> (выглядит как b1gxxxxxxxxx)
+                      <div className="mt-1 space-y-1">
+                        • После входа нажмите <strong>"Создать проект"</strong> (большая зелёная кнопка)
+                        <br />
+                        • Придумайте любое название (например, "Мой IPTV плеер")
+                        <br />
+                        • Нажмите <strong>"Создать"</strong> — проект появится в списке
+                      </div>
                     </li>
+
                     <li>
-                      <strong>3. Создайте сервисный аккаунт:</strong>
+                      <strong className="text-foreground">Шаг 3. Получите Client Secret</strong>
                       <br />
-                      • Откройте раздел "Сервисные аккаунты"
-                      <br />
-                      • Нажмите "Создать сервисный аккаунт"
-                      <br />
-                      • Укажите имя (например, "my-iptv-ai")
-                      <br />
-                      • Добавьте роли: <code className="bg-background/50 px-1 rounded">ai.languageModels.user</code> и <code className="bg-background/50 px-1 rounded">ai.imageGeneration.user</code>
+                      <div className="mt-1 space-y-1">
+                        • Откройте созданный проект (кликните по названию)
+                        <br />
+                        • Перейдите на вкладку <strong>"Авторизационные данные"</strong> (слева в меню)
+                        <br />
+                        • Нажмите <strong>"Создать авторизационные данные"</strong>
+                        <br />
+                        • В поле "Название" напишите что угодно (например, "API ключ")
+                        <br />
+                        • <strong className="text-accent">Срок действия:</strong> выберите <strong>"Без ограничения"</strong> (чтобы не переделывать)
+                        <br />
+                        • Нажмите <strong>"Создать"</strong>
+                      </div>
                     </li>
+
                     <li>
-                      <strong>4. Выпустите API-ключ:</strong>
+                      <strong className="text-foreground">Шаг 4. Скопируйте Client Secret</strong>
                       <br />
-                      • Откройте созданный сервисный аккаунт
-                      <br />
-                      • Нажмите "Создать новый ключ" → "Создать API-ключ"
-                      <br />
-                      • Скопируйте ключ (выглядит как AQVNxxxxxxxxx) — он больше не отобразится!
+                      <div className="mt-1 space-y-1">
+                        • После создания появится окно с <strong>Client Secret</strong>
+                        <br />
+                        • Это длинная строка вида: <code className="bg-background/50 px-1 rounded text-xs">NmYwM2RmZmItZGY2Zi00ZjQyLWE3...</code>
+                        <br />
+                        • <strong className="text-red-500">⚠️ ВАЖНО:</strong> Скопируйте её СРАЗУ! Потом не сможете посмотреть
+                        <br />
+                        • Нажмите на кнопку <strong>"Скопировать"</strong> рядом с ключом
+                      </div>
                     </li>
+
                     <li>
-                      <strong>5. Добавьте секреты в проект:</strong>
+                      <strong className="text-foreground">Шаг 5. Добавьте ключ в проект</strong>
                       <br />
-                      • Откройте вкладку <strong>"Секреты"</strong> в редакторе poehali.dev
-                      <br />
-                      • Добавьте <code className="bg-background/50 px-1 rounded">YANDEX_API_KEY</code> — вставьте API-ключ
-                      <br />
-                      • Добавьте <code className="bg-background/50 px-1 rounded">YANDEX_FOLDER_ID</code> — вставьте ID каталога
+                      <div className="mt-1 space-y-1">
+                        • В редакторе poehali.dev откройте вкладку <strong>"Секреты"</strong> (верхнее меню)
+                        <br />
+                        • Найдите секрет с названием <code className="bg-background/50 px-1 rounded">GIGACHAT_CLIENT_SECRET</code>
+                        <br />
+                        • Нажмите <strong>"Добавить значение"</strong>
+                        <br />
+                        • Вставьте скопированный <strong>Client Secret</strong>
+                        <br />
+                        • Нажмите <strong>"Сохранить"</strong>
+                      </div>
                     </li>
                   </ol>
                 </div>
 
                 <div className="border-t pt-3">
-                  <p className="text-sm text-muted-foreground">
-                    💡 <strong>После добавления секретов</strong> ИИ-функции заработают автоматически! Просто введите название фильма в поле поиска.
-                  </p>
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                    <p className="text-sm text-foreground">
+                      ✅ <strong>Готово!</strong> После добавления Client Secret все ИИ-функции заработают автоматически.
+                      <br />
+                      Просто введите название фильма в поле поиска выше и нажмите "Найти ИИ" — GigaChat найдёт информацию, а Kandinsky создаст постер!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t pt-3">
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium text-foreground hover:text-accent">💡 Часто задаваемые вопросы</summary>
+                    <div className="mt-3 space-y-2 text-muted-foreground">
+                      <div>
+                        <strong>Q: Это платно?</strong>
+                        <br />
+                        A: Нет! GigaChat даёт бесплатно 10,000 запросов в месяц. Этого хватит на ~300-500 фильмов.
+                      </div>
+                      <div>
+                        <strong>Q: Работает ли в России?</strong>
+                        <br />
+                        A: Да! GigaChat и Kandinsky — российские сервисы, работают без VPN.
+                      </div>
+                      <div>
+                        <strong>Q: Что делать, если потерял Client Secret?</strong>
+                        <br />
+                        A: Создайте новый на сайте GigaChat (Шаг 3), старый можно удалить.
+                      </div>
+                      <div>
+                        <strong>Q: Можно ли использовать другую ИИ?</strong>
+                        <br />
+                        A: Да, напишите Юре: "Подключи другую нейросеть" — он поможет.
+                      </div>
+                    </div>
+                  </details>
                 </div>
               </div>
             </div>
