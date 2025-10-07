@@ -1,11 +1,11 @@
 import json
 import os
 from typing import Dict, Any
-import google.generativeai as genai
+import requests
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Search movie/series info using Google Gemini AI by title
+    Business: Search movie/series info using YandexGPT by title
     Args: event - dict with httpMethod, queryStringParameters (query)
           context - object with request_id attribute
     Returns: HTTP response with found content details
@@ -42,8 +42,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        genai.configure(api_key=os.environ['GEMINI_API_KEY'])
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        api_key = os.environ['YANDEX_API_KEY']
+        folder_id = os.environ['YANDEX_FOLDER_ID']
         
         prompt = f"""Найди информацию о фильме, сериале или ТВ-программе: "{query}"
 
@@ -54,13 +54,41 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 - rating: рейтинг от 0 до 10 (число)
 - year: год выхода (число)
 - type: тип контента - "movie" для фильмов, "series" для сериалов, "tv" для ТВ-каналов
-- image_suggestion: описание постера для генерации (на английском, детальное)
+- image_suggestion: описание постера для генерации (на русском, детальное)
 
 Если не можешь найти информацию, верни пустой объект {{}}.
 Отвечай ТОЛЬКО валидным JSON, без дополнительного текста."""
 
-        response = model.generate_content(prompt)
-        result_text = response.text.strip()
+        response = requests.post(
+            'https://llm.api.cloud.yandex.net/foundationModels/v1/completion',
+            headers={
+                'Authorization': f'Api-Key {api_key}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'modelUri': f'gpt://{folder_id}/yandexgpt-lite/latest',
+                'completionOptions': {
+                    'stream': False,
+                    'temperature': 0.3,
+                    'maxTokens': 1000
+                },
+                'messages': [
+                    {
+                        'role': 'system',
+                        'text': 'Ты помощник для поиска информации о фильмах, сериалах и ТВ-программах. Отвечаешь только JSON.'
+                    },
+                    {
+                        'role': 'user',
+                        'text': prompt
+                    }
+                ]
+            }
+        )
+        
+        response.raise_for_status()
+        result = response.json()
+        
+        result_text = result['result']['alternatives'][0]['message']['text'].strip()
         
         if result_text.startswith('```json'):
             result_text = result_text[7:]

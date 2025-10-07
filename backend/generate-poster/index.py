@@ -1,13 +1,12 @@
 import json
 import os
 from typing import Dict, Any
-import google.generativeai as genai
 import requests
-import base64
+import time
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Generate movie poster description using Gemini (image generation requires paid service)
+    Business: Generate movie poster using YandexART
     Args: event - dict with httpMethod, body (JSON with title, description)
           context - object with request_id attribute
     Returns: HTTP response with poster description or placeholder
@@ -46,26 +45,85 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        prompt_parts = [f"'{title}'"]
-        if description:
-            prompt_parts.append(description)
-        if genre:
-            prompt_parts.append(f"{genre} genre")
+        api_key = os.environ['YANDEX_API_KEY']
+        folder_id = os.environ['YANDEX_FOLDER_ID']
         
-        prompt_text = ", ".join(prompt_parts)
+        image_suggestion = body_data.get('image_suggestion', '')
         
-        placeholder_url = f"https://placehold.co/400x600/1a1a1a/white?text={title[:30]}"
+        if not image_suggestion:
+            prompt_parts = [f"Постер к фильму '{title}'"]
+            if description:
+                prompt_parts.append(description)
+            if genre:
+                prompt_parts.append(f"жанр {genre}")
+            prompt_text = ", ".join(prompt_parts)
+        else:
+            prompt_text = image_suggestion
+        
+        generate_response = requests.post(
+            'https://llm.api.cloud.yandex.net/foundationModels/v1/imageGenerationAsync',
+            headers={
+                'Authorization': f'Api-Key {api_key}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'modelUri': f'art://{folder_id}/yandex-art/latest',
+                'generationOptions': {
+                    'seed': str(hash(title) % 1000000),
+                    'aspectRatio': {
+                        'widthRatio': 2,
+                        'heightRatio': 3
+                    }
+                },
+                'messages': [
+                    {
+                        'weight': 1,
+                        'text': prompt_text
+                    }
+                ]
+            }
+        )
+        
+        generate_response.raise_for_status()
+        operation = generate_response.json()
+        operation_id = operation['id']
+        
+        for _ in range(30):
+            time.sleep(2)
+            
+            check_response = requests.get(
+                f'https://llm.api.cloud.yandex.net:443/operations/{operation_id}',
+                headers={'Authorization': f'Api-Key {api_key}'}
+            )
+            check_response.raise_for_status()
+            result = check_response.json()
+            
+            if result.get('done'):
+                if 'response' in result:
+                    image_base64 = result['response']['image']
+                    image_url = f"data:image/jpeg;base64,{image_base64}"
+                    
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({
+                            'image_url': image_url,
+                            'title': title,
+                            'prompt': prompt_text
+                        })
+                    }
+                else:
+                    return {
+                        'statusCode': 500,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Image generation failed'})
+                    }
         
         return {
-            'statusCode': 200,
+            'statusCode': 408,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'isBase64Encoded': False,
-            'body': json.dumps({
-                'image_url': placeholder_url,
-                'title': title,
-                'prompt': f"Movie poster: {prompt_text}",
-                'note': 'Using placeholder - Gemini image generation requires Imagen API'
-            })
+            'body': json.dumps({'error': 'Generation timeout'})
         }
         
     except Exception as e:
