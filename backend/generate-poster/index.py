@@ -5,6 +5,9 @@ import requests
 import time
 import uuid
 import base64
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''

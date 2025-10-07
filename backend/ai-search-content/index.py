@@ -3,6 +3,9 @@ import os
 from typing import Dict, Any
 import requests
 import uuid
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
