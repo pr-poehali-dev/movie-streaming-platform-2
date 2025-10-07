@@ -11,12 +11,15 @@ import { useToast } from '@/hooks/use-toast';
 const API_URL = 'https://functions.poehali.dev/1a8978cb-79fe-4881-b0c8-f6cbaf78bbb2';
 const AI_SEARCH_URL = 'https://functions.poehali.dev/f7697e93-53cc-4169-903e-a3802bb3a196';
 const GENERATE_POSTER_URL = 'https://functions.poehali.dev/56d47e39-a967-438f-9162-0ac0a8e6be40';
+const TEST_GIGACHAT_URL = 'https://functions.poehali.dev/ed0587a0-d5ec-4f38-9003-249db2dce150';
 
 const Admin = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isGeneratingPoster, setIsGeneratingPoster] = useState(false);
+  const [isTestingGigaChat, setIsTestingGigaChat] = useState(false);
+  const [gigaChatTestResult, setGigaChatTestResult] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     title: '',
@@ -177,6 +180,52 @@ const Admin = () => {
     }
   };
 
+  const handleTestGigaChat = async () => {
+    setIsTestingGigaChat(true);
+    setGigaChatTestResult(null);
+
+    try {
+      const response = await fetch(TEST_GIGACHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          client_secrets: [
+            "b54c49b7-df1c-45ce-a674-c40dac1ce101",
+            "0199bd4a-ab72-7e85-b42e-9ba79c6385bf"
+          ],
+          query: "Найди информацию о фильме 'Матрица'"
+        }),
+      });
+
+      const data = await response.json();
+      setGigaChatTestResult(data);
+
+      if (data.success && data.working_secret) {
+        toast({
+          title: 'Успешно!',
+          description: `GigaChat API работает! Рабочий секрет: ${data.working_secret_masked}`,
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: 'Ни один Client Secret не работает. Проверьте результаты ниже.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: error instanceof Error ? error.message : 'Не удалось выполнить тест',
+        variant: 'destructive',
+      });
+      setGigaChatTestResult({ error: error instanceof Error ? error.message : 'Unknown error' });
+    } finally {
+      setIsTestingGigaChat(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
@@ -194,6 +243,83 @@ const Admin = () => {
       </nav>
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
+        <Card className="p-6 mb-6 bg-blue-500/10 border-blue-500/20">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Icon name="Settings" size={24} className="text-blue-500" />
+              <h3 className="text-xl font-bold">Тестирование GigaChat API</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Проверьте работоспособность Client Secret для GigaChat API
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                onClick={handleTestGigaChat}
+                disabled={isTestingGigaChat}
+                className="bg-blue-500 hover:bg-blue-600"
+              >
+                {isTestingGigaChat ? (
+                  <>
+                    <Icon name="Loader2" size={18} className="animate-spin" />
+                    <span className="ml-2">Тестирование...</span>
+                  </>
+                ) : (
+                  <>
+                    <Icon name="Play" size={18} />
+                    <span className="ml-2">Запустить тест</span>
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {gigaChatTestResult && (
+              <div className="mt-4 space-y-3">
+                {gigaChatTestResult.success && gigaChatTestResult.working_secret ? (
+                  <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon name="CheckCircle2" size={20} className="text-green-500" />
+                      <span className="font-bold text-green-500">API работает!</span>
+                    </div>
+                    <div className="text-sm space-y-1">
+                      <p>Рабочий Client Secret: <code className="bg-background/50 px-2 py-1 rounded">{gigaChatTestResult.working_secret}</code></p>
+                      <p>Маскированный: {gigaChatTestResult.working_secret_masked}</p>
+                    </div>
+                    
+                    {gigaChatTestResult.results?.[0]?.api_result?.answer && (
+                      <div className="mt-3 p-3 bg-background/50 rounded">
+                        <p className="font-semibold mb-1">Ответ GigaChat:</p>
+                        <p className="text-sm whitespace-pre-wrap">{gigaChatTestResult.results[0].api_result.answer}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon name="XCircle" size={20} className="text-red-500" />
+                      <span className="font-bold text-red-500">API не работает</span>
+                    </div>
+                    <div className="text-sm space-y-2">
+                      {gigaChatTestResult.results?.map((result: any, idx: number) => (
+                        <div key={idx} className="p-2 bg-background/50 rounded">
+                          <p className="font-medium">Client Secret {idx + 1}: {result.masked_secret}</p>
+                          <p className="text-muted-foreground">Статус: {result.status}</p>
+                          {result.token_result && !result.token_result.success && (
+                            <p className="text-red-400 text-xs mt-1">Ошибка токена: {result.token_result.error}</p>
+                          )}
+                          {result.api_result && !result.api_result.success && (
+                            <p className="text-red-400 text-xs mt-1">Ошибка API: {result.api_result.error}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
+
         <Card className="p-8 animate-fade-in">
           <div className="mb-6">
             <h2 className="text-3xl font-bold mb-2">Добавить контент</h2>

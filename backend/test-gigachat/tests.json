@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Test GigaChat API with default secrets",
+    "request": {
+      "method": "POST",
+      "body": {
+        "query": "Найди информацию о фильме 'Матрица'"
+      }
+    },
+    "expected": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    }
+  },
+  {
+    "name": "Test GigaChat API with custom query",
+    "request": {
+      "method": "POST",
+      "body": {
+        "query": "Кто создал GigaChat?"
+      }
+    },
+    "expected": {
+      "status": 200,
+      "body": {
+        "success": true
+      }
+    }
+  }
+]
