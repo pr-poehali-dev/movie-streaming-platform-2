@@ -1,11 +1,11 @@
 import json
 import os
 from typing import Dict, Any
-from openai import OpenAI
+import google.generativeai as genai
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Search movie/series info using AI by title
+    Business: Search movie/series info using Google Gemini AI by title
     Args: event - dict with httpMethod, queryStringParameters (query)
           context - object with request_id attribute
     Returns: HTTP response with found content details
@@ -42,7 +42,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+        genai.configure(api_key=os.environ['GEMINI_API_KEY'])
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = f"""Найди информацию о фильме, сериале или ТВ-программе: "{query}"
 
@@ -58,17 +59,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 Если не можешь найти информацию, верни пустой объект {{}}.
 Отвечай ТОЛЬКО валидным JSON, без дополнительного текста."""
 
-        response = client.chat.completions.create(
-            model='gpt-4o-mini',
-            messages=[
-                {'role': 'system', 'content': 'Ты помощник для поиска информации о фильмах, сериалах и ТВ-программах. Отвечаешь только JSON.'},
-                {'role': 'user', 'content': prompt}
-            ],
-            temperature=0.3,
-            max_tokens=500
-        )
-        
-        result_text = response.choices[0].message.content.strip()
+        response = model.generate_content(prompt)
+        result_text = response.text.strip()
         
         if result_text.startswith('```json'):
             result_text = result_text[7:]

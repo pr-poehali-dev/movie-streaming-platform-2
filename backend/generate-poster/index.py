@@ -1,14 +1,16 @@
 import json
 import os
 from typing import Dict, Any
-from openai import OpenAI
+import google.generativeai as genai
+import requests
+import base64
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Generate movie poster image using AI based on description
+    Business: Generate movie poster description using Gemini (image generation requires paid service)
     Args: event - dict with httpMethod, body (JSON with title, description)
           context - object with request_id attribute
-    Returns: HTTP response with generated image URL
+    Returns: HTTP response with poster description or placeholder
     '''
     method: str = event.get('httpMethod', 'POST')
     
@@ -44,33 +46,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
-        
-        prompt = f"Professional movie poster for '{title}'"
+        prompt_parts = [f"'{title}'"]
         if description:
-            prompt += f", {description}"
+            prompt_parts.append(description)
         if genre:
-            prompt += f", {genre} genre"
-        prompt += ", cinematic lighting, dramatic composition, high quality, detailed, professional film poster style"
+            prompt_parts.append(f"{genre} genre")
         
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            size="1024x1024",
-            quality="standard",
-            n=1
-        )
+        prompt_text = ", ".join(prompt_parts)
         
-        image_url = response.data[0].url
+        placeholder_url = f"https://placehold.co/400x600/1a1a1a/white?text={title[:30]}"
         
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'isBase64Encoded': False,
             'body': json.dumps({
-                'image_url': image_url,
+                'image_url': placeholder_url,
                 'title': title,
-                'prompt': prompt
+                'prompt': f"Movie poster: {prompt_text}",
+                'note': 'Using placeholder - Gemini image generation requires Imagen API'
             })
         }
         
