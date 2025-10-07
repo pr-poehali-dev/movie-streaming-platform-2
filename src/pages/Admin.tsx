@@ -423,14 +423,74 @@ const Admin = () => {
         <Card className="p-6 mt-8 bg-accent/10 border-accent">
           <div className="flex gap-4">
             <Icon name="Sparkles" size={24} className="text-accent flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-semibold mb-2">ИИ-возможности (YandexGPT + YandexART):</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>✨ <strong>Умный поиск:</strong> YandexGPT найдёт всю информацию о фильме по названию</li>
-                <li>🎨 <strong>Постеры:</strong> YandexART автоматически сгенерирует уникальный постер</li>
-                <li>📹 Для видео используйте прямые ссылки на .mp4, .webm или HLS-потоки (.m3u8)</li>
-                <li>🔑 <strong>Настройка:</strong> Добавьте ключи в разделе "Секреты" (console.yandex.cloud)</li>
-              </ul>
+            <div className="w-full">
+              <h3 className="font-semibold mb-3 text-lg">🤖 ИИ-возможности (YandexGPT + YandexART)</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2">Что умеет ИИ:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>✨ <strong>Умный поиск:</strong> YandexGPT найдёт всю информацию о фильме по названию</li>
+                    <li>🎨 <strong>Постеры:</strong> YandexART автоматически сгенерирует уникальный постер</li>
+                    <li>📹 Для видео используйте прямые ссылки на .mp4, .webm или HLS-потоки (.m3u8)</li>
+                  </ul>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-3">📋 Инструкция по настройке (5 минут):</h4>
+                  <ol className="text-sm text-muted-foreground space-y-3">
+                    <li>
+                      <strong>1. Откройте Яндекс Облако:</strong>
+                      <br />
+                      Перейдите на <a href="https://console.yandex.cloud" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">console.yandex.cloud</a> и войдите через Яндекс ID
+                    </li>
+                    <li>
+                      <strong>2. Создайте облако и каталог:</strong>
+                      <br />
+                      • Нажмите "Создать облако" (если ещё нет)
+                      <br />
+                      • Создайте каталог (folder) — это бесплатно
+                      <br />
+                      • Скопируйте <strong>ID каталога</strong> (выглядит как b1gxxxxxxxxx)
+                    </li>
+                    <li>
+                      <strong>3. Создайте сервисный аккаунт:</strong>
+                      <br />
+                      • Откройте раздел "Сервисные аккаунты"
+                      <br />
+                      • Нажмите "Создать сервисный аккаунт"
+                      <br />
+                      • Укажите имя (например, "my-iptv-ai")
+                      <br />
+                      • Добавьте роли: <code className="bg-background/50 px-1 rounded">ai.languageModels.user</code> и <code className="bg-background/50 px-1 rounded">ai.imageGeneration.user</code>
+                    </li>
+                    <li>
+                      <strong>4. Выпустите API-ключ:</strong>
+                      <br />
+                      • Откройте созданный сервисный аккаунт
+                      <br />
+                      • Нажмите "Создать новый ключ" → "Создать API-ключ"
+                      <br />
+                      • Скопируйте ключ (выглядит как AQVNxxxxxxxxx) — он больше не отобразится!
+                    </li>
+                    <li>
+                      <strong>5. Добавьте секреты в проект:</strong>
+                      <br />
+                      • Откройте вкладку <strong>"Секреты"</strong> в редакторе poehali.dev
+                      <br />
+                      • Добавьте <code className="bg-background/50 px-1 rounded">YANDEX_API_KEY</code> — вставьте API-ключ
+                      <br />
+                      • Добавьте <code className="bg-background/50 px-1 rounded">YANDEX_FOLDER_ID</code> — вставьте ID каталога
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="border-t pt-3">
+                  <p className="text-sm text-muted-foreground">
+                    💡 <strong>После добавления секретов</strong> ИИ-функции заработают автоматически! Просто введите название фильма в поле поиска.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </Card>
