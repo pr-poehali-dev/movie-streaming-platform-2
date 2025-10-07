@@ -1,0 +1,11 @@
+[
+  {
+    "name": "Test GigaChat API Direct",
+    "request": {
+      "method": "GET"
+    },
+    "expected": {
+      "statusCode": 200
+    }
+  }
+]
