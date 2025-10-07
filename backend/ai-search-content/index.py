@@ -2,14 +2,10 @@ import json
 import os
 from typing import Dict, Any
 import requests
-import uuid
-import urllib3
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Search movie/series info using GigaChat by title
+    Business: Search movie/series info using YandexGPT by title
     Args: event - dict with httpMethod, queryStringParameters (query)
           context - object with request_id attribute
     Returns: HTTP response with found content details
@@ -46,16 +42,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        client_secret = os.environ['GIGACHAT_CLIENT_SECRET']
-        
-        auth_response = requests.post(
-            'https://ngw.devices.sberbank.ru:9443/api/v2/oauth',
-            headers={'Authorization': f'Basic {client_secret}', 'RqUID': str(uuid.uuid4())},
-            data={'scope': 'GIGACHAT_API_PERS'},
-            verify=False
-        )
-        auth_response.raise_for_status()
-        access_token = auth_response.json()['access_token']
+        api_key = os.environ['YANDEX_API_KEY']
+        folder_id = os.environ['YANDEX_FOLDER_ID']
         
         prompt = f"""Найди информацию о фильме, сериале или ТВ-программе: "{query}"
 
@@ -72,33 +60,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 Отвечай ТОЛЬКО валидным JSON, без дополнительного текста."""
 
         response = requests.post(
-            'https://gigachat.devices.sberbank.ru/api/v1/chat/completions',
+            'https://llm.api.cloud.yandex.net/foundationModels/v1/completion',
             headers={
-                'Authorization': f'Bearer {access_token}',
+                'Authorization': f'Api-Key {api_key}',
                 'Content-Type': 'application/json'
             },
             json={
-                'model': 'GigaChat',
+                'modelUri': f'gpt://{folder_id}/yandexgpt-lite/latest',
+                'completionOptions': {
+                    'stream': False,
+                    'temperature': 0.3,
+                    'maxTokens': 2000
+                },
                 'messages': [
                     {
                         'role': 'system',
-                        'content': 'Ты помощник для поиска информации о фильмах, сериалах и ТВ-программах. Отвечаешь только JSON.'
+                        'text': 'Ты помощник для поиска информации о фильмах, сериалах и ТВ-программах. Отвечаешь только JSON.'
                     },
                     {
                         'role': 'user',
-                        'content': prompt
+                        'text': prompt
                     }
-                ],
-                'temperature': 0.3,
-                'max_tokens': 1000
-            },
-            verify=False
+                ]
+            }
         )
         
         response.raise_for_status()
         result = response.json()
         
-        result_text = result['choices'][0]['message']['content'].strip()
+        result_text = result['result']['alternatives'][0]['message']['text'].strip()
         
         if result_text.startswith('```json'):
             result_text = result_text[7:]

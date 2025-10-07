@@ -3,18 +3,14 @@ import os
 from typing import Dict, Any
 import requests
 import time
-import uuid
 import base64
-import urllib3
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Generate movie poster using Kandinsky (GigaChat)
+    Business: Generate movie poster using YandexART
     Args: event - dict with httpMethod, body (JSON with title, description)
           context - object with request_id attribute
-    Returns: HTTP response with poster description or placeholder
+    Returns: HTTP response with base64 poster image
     '''
     method: str = event.get('httpMethod', 'POST')
     
@@ -50,21 +46,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        client_secret = os.environ['GIGACHAT_CLIENT_SECRET']
-        
-        auth_response = requests.post(
-            'https://ngw.devices.sberbank.ru:9443/api/v2/oauth',
-            headers={'Authorization': f'Basic {client_secret}', 'RqUID': str(uuid.uuid4())},
-            data={'scope': 'GIGACHAT_API_PERS'},
-            verify=False
-        )
-        auth_response.raise_for_status()
-        access_token = auth_response.json()['access_token']
+        api_key = os.environ['YANDEX_API_KEY']
+        folder_id = os.environ['YANDEX_FOLDER_ID']
         
         image_suggestion = body_data.get('image_suggestion', '')
         
         if not image_suggestion:
-            prompt_parts = [f"Постер к фильму '{title}'"]
+            prompt_parts = [f"Кинопостер к фильму '{title}'"]
             if description:
                 prompt_parts.append(description)
             if genre:
@@ -74,42 +62,70 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             prompt_text = image_suggestion
         
         generate_response = requests.post(
-            'https://gigachat.devices.sberbank.ru/api/v1/images/generations',
+            'https://llm.api.cloud.yandex.net/foundationModels/v1/imageGenerationAsync',
             headers={
-                'Authorization': f'Bearer {access_token}',
+                'Authorization': f'Api-Key {api_key}',
                 'Content-Type': 'application/json'
             },
             json={
-                'prompt': prompt_text,
-                'n': 1,
-                'size': '512x768'
-            },
-            verify=False
+                'modelUri': f'art://{folder_id}/yandex-art/latest',
+                'generationOptions': {
+                    'seed': int(time.time()),
+                    'aspectRatio': {
+                        'widthRatio': 2,
+                        'heightRatio': 3
+                    }
+                },
+                'messages': [
+                    {
+                        'weight': 1,
+                        'text': prompt_text
+                    }
+                ]
+            }
         )
         
         generate_response.raise_for_status()
-        result = generate_response.json()
+        operation_id = generate_response.json()['id']
         
-        if 'data' in result and len(result['data']) > 0:
-            image_base64 = result['data'][0]['image']
-            image_url = f"data:image/jpeg;base64,{image_base64}"
+        max_attempts = 30
+        for attempt in range(max_attempts):
+            time.sleep(2)
             
-            return {
-                'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'isBase64Encoded': False,
-                'body': json.dumps({
-                    'image_url': image_url,
-                    'title': title,
-                    'prompt': prompt_text
-                })
-            }
-        else:
-            return {
-                'statusCode': 500,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Image generation failed'})
-            }
+            status_response = requests.get(
+                f'https://llm.api.cloud.yandex.net:443/operations/{operation_id}',
+                headers={'Authorization': f'Api-Key {api_key}'}
+            )
+            status_response.raise_for_status()
+            status_data = status_response.json()
+            
+            if status_data.get('done'):
+                if 'response' in status_data:
+                    image_base64 = status_data['response']['image']
+                    image_url = f"data:image/jpeg;base64,{image_base64}"
+                    
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'isBase64Encoded': False,
+                        'body': json.dumps({
+                            'image_url': image_url,
+                            'title': title,
+                            'prompt': prompt_text
+                        })
+                    }
+                else:
+                    return {
+                        'statusCode': 500,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Image generation failed', 'details': status_data})
+                    }
+        
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Image generation timeout'})
+        }
         
     except Exception as e:
         return {
